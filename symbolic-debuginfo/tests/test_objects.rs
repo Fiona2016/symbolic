@@ -8,8 +8,8 @@ use symbolic_debuginfo::ObjectDebugSession;
 use symbolic_debuginfo::dwarf::DwarfErrorKind;
 use symbolic_debuginfo::elf::ElfObject;
 use symbolic_debuginfo::{
-    FileEntry, Function, LineInfo, MemberOffset, Object, ObjectKind, ParseObjectOptions, SymbolMap,
-    Type, TypeRef, TypeSize, VariableLocation, pe::PeObject,
+    FileEntry, Function, LineInfo, Object, ObjectKind, ParseObjectOptions, Size, SymbolMap, Type,
+    TypeRef, VariableLocation, pe::PeObject,
 };
 use symbolic_testutils::fixture;
 
@@ -222,7 +222,7 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
                         indent = self.depth * 2
                     ),
                 };
-                if let Some(value_size) = ty.value_size {
+                if let Some(value_size) = ty.value_bits {
                     writeln!(
                         f,
                         "{:indent$}  (value: size {}, offset {})",
@@ -300,14 +300,15 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
                         indent = (self.depth + 1) * 2
                     )?;
                     match member.offset {
-                        MemberOffset::Bytes(offset) => {
+                        Some(Size::Bytes(offset)) => {
                             let unit = if offset == 1 { "byte" } else { "bytes" };
                             writeln!(f, " (offset {offset} {unit})")?;
                         }
-                        MemberOffset::Bits(offset) => {
+                        Some(Size::Bits(offset)) => {
                             let unit = if offset == 1 { "bit" } else { "bits" };
                             writeln!(f, " (offset {offset} {unit})")?;
                         }
+                        None => writeln!(f, " (<unknown offset>)")?,
                     }
                     if let Some(member_size) = member.size {
                         let (size, unit) = size(member_size);
@@ -336,10 +337,10 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
     }
 }
 
-fn size(size: TypeSize) -> (u64, &'static str) {
+fn size(size: Size) -> (u64, &'static str) {
     match size {
-        TypeSize::Bytes(size) => (size, if size == 1 { "byte" } else { "bytes" }),
-        TypeSize::Bits(size) => (size, if size == 1 { "bit" } else { "bits" }),
+        Size::Bytes(size) => (size, if size == 1 { "byte" } else { "bytes" }),
+        Size::Bits(size) => (size, if size == 1 { "bit" } else { "bits" }),
     }
 }
 

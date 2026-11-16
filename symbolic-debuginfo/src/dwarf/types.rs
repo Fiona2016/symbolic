@@ -2,8 +2,8 @@ use gimli::{AttributeValue, DebuggingInformationEntry, UnitOffset, constants};
 
 use crate::dwarf::{DwarfError, Slice, UnitRef};
 use crate::{
-    MemberOffset, PointerType, PrimitiveType, PrimitiveTypeEncoding, StructureMember,
-    StructureType, Type, TypeDefType, TypeSize, ValueSize,
+    PointerType, PrimitiveType, PrimitiveTypeEncoding, Size, StructureMember, StructureType, Type,
+    TypeDefType, ValueBits,
 };
 
 pub fn parse_type<'d>(
@@ -71,14 +71,14 @@ fn parse_base_type<'d>(
 
     let (size, value_size) = match (byte_size, bit_size) {
         (Some(byte_size), Some(bit_size)) => (
-            TypeSize::Bytes(byte_size),
-            Some(ValueSize {
+            Size::Bytes(byte_size),
+            Some(ValueBits {
                 size: bit_size,
                 offset: data_bit_offset.unwrap_or(0),
             }),
         ),
-        (Some(byte_size), None) => (TypeSize::Bytes(byte_size), None),
-        (None, Some(bit_size)) => (TypeSize::Bits(bit_size), None),
+        (Some(byte_size), None) => (Size::Bytes(byte_size), None),
+        (None, Some(bit_size)) => (Size::Bits(bit_size), None),
         (None, None) => return None,
     };
 
@@ -86,7 +86,7 @@ fn parse_base_type<'d>(
         name,
         encoding,
         size,
-        value_size,
+        value_bits: value_size,
     })
 }
 
@@ -103,10 +103,10 @@ fn parse_pointer_type<'d>(
             // treating the pointer as `void*`.
             constants::DW_AT_type => pointee = Some(unit.to_type_ref(attr)?),
             constants::DW_AT_byte_size => {
-                size = attr.udata_value().map(TypeSize::Bytes);
+                size = attr.udata_value().map(Size::Bytes);
             }
             constants::DW_AT_bit_size => {
-                size = attr.udata_value().map(TypeSize::Bits);
+                size = attr.udata_value().map(Size::Bits);
             }
             _ => {}
         }
@@ -114,7 +114,7 @@ fn parse_pointer_type<'d>(
 
     Some(PointerType {
         pointee: pointee.map(Into::into),
-        size: size.unwrap_or_else(|| TypeSize::Bytes(unit.unit.encoding().address_size.into())),
+        size: size.unwrap_or_else(|| Size::Bytes(unit.unit.encoding().address_size.into())),
     })
 }
 
@@ -157,10 +157,10 @@ fn parse_structure_type<'d>(
                 name = unit.string_value(attr.value());
             }
             constants::DW_AT_byte_size => {
-                size = attr.udata_value().map(TypeSize::Bytes);
+                size = attr.udata_value().map(Size::Bytes);
             }
             constants::DW_AT_bit_size => {
-                size = attr.udata_value().map(TypeSize::Bits);
+                size = attr.udata_value().map(Size::Bits);
             }
             _ => {}
         }
@@ -190,27 +190,29 @@ fn parse_structure_type<'d>(
                     ty = unit.to_type_ref(attr).map(Into::into);
                 }
                 constants::DW_AT_data_member_location => {
-                    offset = Some(attr.udata_value().map(MemberOffset::Bytes));
+                    offset = Some(attr.udata_value().map(Size::Bytes));
                 }
                 constants::DW_AT_data_bit_offset => {
-                    offset = Some(attr.udata_value().map(MemberOffset::Bits));
+                    offset = Some(attr.udata_value().map(Size::Bits));
                 }
                 constants::DW_AT_byte_size => {
-                    size = attr.udata_value().map(TypeSize::Bytes);
+                    size = attr.udata_value().map(Size::Bytes);
                 }
                 constants::DW_AT_bit_size => {
-                    size = attr.udata_value().map(TypeSize::Bits);
+                    size = attr.udata_value().map(Size::Bits);
                 }
                 _ => {}
             }
         }
 
         let offset = match offset {
-            Some(Some(offset)) => offset,
-            // DWARF 5 §5.7.6 - The offset attributes may be missing if the member is at the beginning.
-            None => MemberOffset::Bytes(0),
-            // A valid member must also have a valid offset.
-            Some(None) => continue,
+            Some(Some(offset)) => Some(offset),
+            // DWARF 5 §5.7.6 - Offset zero is implied when both attributes are absent.
+            None => Some(Size::Bytes(0)),
+            // `DW_AT_data_member_location` can possibly be an expression which is currently not
+            // supported, hence we do store and allow `None`. Practically in DWARF an offset is
+            // always required.
+            Some(None) => None,
         };
 
         // A valid member must always have a type.

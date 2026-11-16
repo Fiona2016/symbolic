@@ -91,9 +91,9 @@ pub struct PrimitiveType<'data> {
     /// The encoding gives additional information how the value of the type is to be interpreted.
     pub encoding: Option<PrimitiveTypeEncoding>,
     /// The size of the primitive type's storage.
-    pub size: TypeSize,
+    pub size: Size,
     /// The meaningful value range within the primitive type's storage.
-    pub value_size: Option<ValueSize>,
+    pub value_bits: Option<ValueBits>,
 }
 
 /// An encoding for a [`PrimitiveType`].
@@ -119,6 +119,15 @@ pub enum PrimitiveTypeEncoding {
     ComplexFloat,
 }
 
+/// The meaningful value range within a base type's storage.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct ValueBits {
+    /// The actual size of the value in bits.
+    pub size: u64,
+    /// The bit offset of the value from the beginning of the storage.
+    pub offset: u64,
+}
+
 /// A pointer or reference type.
 #[derive(Debug, Clone)]
 pub struct PointerType {
@@ -127,7 +136,7 @@ pub struct PointerType {
     /// A value of `None` indicates that the pointer has no referenced type, e.g. for `void*`.
     pub pointee: Option<TypeRef>,
     /// The size of a pointer.
-    pub size: TypeSize,
+    pub size: Size,
 }
 
 /// A type that is defined in the terms of another type.
@@ -150,7 +159,7 @@ pub struct StructureType<'data> {
     /// For anonymous structures the name may be missing.
     pub name: Option<Cow<'data, str>>,
     /// The size of the structure.
-    pub size: Option<TypeSize>,
+    pub size: Option<Size>,
     /// All members of the structure in declaration order.
     pub members: Vec<StructureMember<'data>>,
 }
@@ -165,36 +174,22 @@ pub struct StructureMember<'data> {
     /// The type of the member.
     pub ty: TypeRef,
     /// The offset of this member from the beginning of the structure.
-    pub offset: MemberOffset,
-    /// The size of this member's storage, if it differs from its type's storage size.
-    pub size: Option<TypeSize>,
+    ///
+    /// `None` if the offset could not be determined.
+    pub offset: Option<Size>,
+    /// The size of this member's storage.
+    ///
+    /// This is an optional override of type of this member.
+    pub size: Option<Size>,
 }
 
-/// The offset of a member from the beginning of a structure.
+/// A size represented in bits or bytes.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum MemberOffset {
-    /// The offset is given in bytes.
+pub enum Size {
+    /// The value is given in bytes.
     Bytes(u64),
-    /// The offset is given in bits.
+    /// The value is given in bits.
     Bits(u64),
-}
-
-/// The size of a type's storage in memory.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum TypeSize {
-    /// The size is given in bytes.
-    Bytes(u64),
-    /// The size is given in bits.
-    Bits(u64),
-}
-
-/// The meaningful value range within a base type's storage.
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct ValueSize {
-    /// The actual size of the value in bits.
-    pub size: u64,
-    /// The bit offset of the value from the beginning of the storage.
-    pub offset: u64,
 }
 
 /// A single variable available in a function scope.
