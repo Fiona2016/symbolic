@@ -3,32 +3,32 @@ source: symbolic-debuginfo/tests/test_objects.rs
 expression: "FunctionsDebug::new(&session, &functions)"
 ---
 > 0x1040: main (0x92)
-  0x1040: variables.c:235 (/fixture)
-  0x1045: variables.c:241 (/fixture)
-  0x1050: variables.c:241 (/fixture)
-  0x1056: variables.c:241 (/fixture)
-  0x1058: variables.c:241 (/fixture)
-  0x105d: variables.c:241 (/fixture)
-  0x1063: variables.c:241 (/fixture)
-  0x1065: variables.c:241 (/fixture)
-  0x106a: variables.c:242 (/fixture)
-  0x1070: variables.c:247 (/fixture)
-  0x1078: variables.c:241 (/fixture)
-  0x107a: variables.c:242 (/fixture)
-  0x107f: variables.c:243 (/fixture)
-  0x1085: variables.c:242 (/fixture)
-  0x1087: variables.c:243 (/fixture)
-  0x108f: variables.c:245 (/fixture)
-  0x109a: variables.c:243 (/fixture)
-  0x109c: variables.c:245 (/fixture)
-  0x10a1: variables.c:247 (/fixture)
-  0x10a7: variables.c:246 (/fixture)
-  0x10ab: variables.c:247 (/fixture)
-  0x10be: variables.c:247 (/fixture)
-  0x10c2: variables.c:247 (/fixture)
-  0x10c4: variables.c:248 (/fixture)
-  0x10ca: variables.c:250 (/fixture)
-  0x10d0: variables.c:250 (/fixture)
+  0x1040: variables.c:243 (/fixture)
+  0x1045: variables.c:249 (/fixture)
+  0x1050: variables.c:249 (/fixture)
+  0x1056: variables.c:249 (/fixture)
+  0x1058: variables.c:249 (/fixture)
+  0x105d: variables.c:249 (/fixture)
+  0x1063: variables.c:249 (/fixture)
+  0x1065: variables.c:249 (/fixture)
+  0x106a: variables.c:250 (/fixture)
+  0x1070: variables.c:255 (/fixture)
+  0x1078: variables.c:249 (/fixture)
+  0x107a: variables.c:250 (/fixture)
+  0x107f: variables.c:251 (/fixture)
+  0x1085: variables.c:250 (/fixture)
+  0x1087: variables.c:251 (/fixture)
+  0x108f: variables.c:253 (/fixture)
+  0x109a: variables.c:251 (/fixture)
+  0x109c: variables.c:253 (/fixture)
+  0x10a1: variables.c:255 (/fixture)
+  0x10a7: variables.c:254 (/fixture)
+  0x10ab: variables.c:255 (/fixture)
+  0x10be: variables.c:255 (/fixture)
+  0x10c2: variables.c:255 (/fixture)
+  0x10c4: variables.c:256 (/fixture)
+  0x10ca: variables.c:258 (/fixture)
+  0x10d0: variables.c:258 (/fixture)
   variables:
     result (local)
       type:
@@ -46,12 +46,12 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1040..0x10d2: cfa -24
 
 > 0x12c0: through_pointer (0x14)
-  0x12c0: variables.c:230 (/fixture)
-  0x12c6: variables.c:229 (/fixture)
-  0x12c9: variables.c:230 (/fixture)
-  0x12cb: variables.c:230 (/fixture)
-  0x12cd: variables.c:231 (/fixture)
-  0x12d3: variables.c:232 (/fixture)
+  0x12c0: variables.c:238 (/fixture)
+  0x12c6: variables.c:237 (/fixture)
+  0x12c9: variables.c:238 (/fixture)
+  0x12cb: variables.c:238 (/fixture)
+  0x12cd: variables.c:239 (/fixture)
+  0x12d3: variables.c:240 (/fixture)
   variables:
     out (parameter)
       type:
@@ -70,20 +70,20 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x12cb..0x12d4: memory at rdi +4
 
 > 0x1280: vla (0x3e)
-  0x1280: variables.c:213 (/fixture)
-  0x1281: variables.c:214 (/fixture)
-  0x1284: variables.c:214 (/fixture)
-  0x128c: variables.c:214 (/fixture)
-  0x1290: variables.c:213 (/fixture)
-  0x1293: variables.c:214 (/fixture)
-  0x1296: variables.c:216 (/fixture)
-  0x129c: variables.c:214 (/fixture)
-  0x12a8: variables.c:214 (/fixture)
-  0x12ac: variables.c:215 (/fixture)
-  0x12b3: variables.c:217 (/fixture)
-  0x12b6: variables.c:217 (/fixture)
-  0x12bc: variables.c:218 (/fixture)
-  0x12bd: variables.c:218 (/fixture)
+  0x1280: variables.c:221 (/fixture)
+  0x1281: variables.c:222 (/fixture)
+  0x1284: variables.c:222 (/fixture)
+  0x128c: variables.c:222 (/fixture)
+  0x1290: variables.c:221 (/fixture)
+  0x1293: variables.c:222 (/fixture)
+  0x1296: variables.c:224 (/fixture)
+  0x129c: variables.c:222 (/fixture)
+  0x12a8: variables.c:222 (/fixture)
+  0x12ac: variables.c:223 (/fixture)
+  0x12b3: variables.c:225 (/fixture)
+  0x12b6: variables.c:225 (/fixture)
+  0x12bc: variables.c:226 (/fixture)
+  0x12bd: variables.c:226 (/fixture)
   variables:
     n (parameter)
       type:
@@ -95,9 +95,9 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x12a8..0x12bc: memory at rax +0
 
 > 0x1270: stack_home (0xc)
-  0x1270: variables.c:202 (/fixture)
-  0x1274: variables.c:203 (/fixture)
-  0x127b: variables.c:204 (/fixture)
+  0x1270: variables.c:210 (/fixture)
+  0x1274: variables.c:211 (/fixture)
+  0x127b: variables.c:212 (/fixture)
   variables:
     a (parameter)
       type:
@@ -109,8 +109,8 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1270..0x127c: cfa -12
 
 > 0x1260: optimized_out (0x4)
-  0x1260: variables.c:191 (/fixture)
-  0x1263: variables.c:192 (/fixture)
+  0x1260: variables.c:199 (/fixture)
+  0x1263: variables.c:200 (/fixture)
   variables:
     a (parameter)
       type:
@@ -118,16 +118,16 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1260..0x1264: register rdi
 
 > 0x1240: external_call (0x20)
-  0x1240: variables.c:175 (/fixture)
-  0x1248: variables.c:176 (/fixture)
-  0x124e: variables.c:176 (/fixture)
-  0x1250: variables.c:178 (/fixture)
-  0x1255: variables.c:180 (/fixture)
-  0x1259: variables.c:179 (/fixture)
-  0x125b: variables.c:180 (/fixture)
-  0x125c: variables.c:179 (/fixture)
-  0x125e: variables.c:180 (/fixture)
-  0x125f: variables.c:180 (/fixture)
+  0x1240: variables.c:183 (/fixture)
+  0x1248: variables.c:184 (/fixture)
+  0x124e: variables.c:184 (/fixture)
+  0x1250: variables.c:186 (/fixture)
+  0x1255: variables.c:188 (/fixture)
+  0x1259: variables.c:187 (/fixture)
+  0x125b: variables.c:188 (/fixture)
+  0x125c: variables.c:187 (/fixture)
+  0x125e: variables.c:188 (/fixture)
+  0x125f: variables.c:188 (/fixture)
   variables:
     a (parameter)
       type:
@@ -144,10 +144,10 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1255..0x125b: register rax
 
 > 0x1230: across_call (0xd)
-  0x1230: variables.c:162 (/fixture)
-  0x1233: variables.c:164 (/fixture)
-  0x123a: variables.c:165 (/fixture)
-  0x123c: variables.c:166 (/fixture)
+  0x1230: variables.c:170 (/fixture)
+  0x1233: variables.c:172 (/fixture)
+  0x123a: variables.c:173 (/fixture)
+  0x123c: variables.c:174 (/fixture)
   variables:
     a (parameter)
       type:
@@ -163,11 +163,11 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x123a..0x123c: register rax
 
 > 0x1220: float_registers (0x10)
-  0x1220: variables.c:147 (/fixture)
-  0x1224: variables.c:149 (/fixture)
-  0x1228: variables.c:151 (/fixture)
-  0x122c: variables.c:152 (/fixture)
-  0x122f: variables.c:152 (/fixture)
+  0x1220: variables.c:155 (/fixture)
+  0x1224: variables.c:157 (/fixture)
+  0x1228: variables.c:159 (/fixture)
+  0x122c: variables.c:160 (/fixture)
+  0x122f: variables.c:160 (/fixture)
   variables:
     a (parameter)
       type:
@@ -187,10 +187,10 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1228..0x122c: register xmm1
 
 > 0x1210: registers (0x9)
-  0x1210: variables.c:134 (/fixture)
-  0x1213: variables.c:136 (/fixture)
-  0x1216: variables.c:138 (/fixture)
-  0x1218: variables.c:139 (/fixture)
+  0x1210: variables.c:142 (/fixture)
+  0x1213: variables.c:144 (/fixture)
+  0x1216: variables.c:146 (/fixture)
+  0x1218: variables.c:147 (/fixture)
   variables:
     a (parameter)
       type:
@@ -210,7 +210,7 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1216..0x1219: register rsi
 
 > 0x1200: inlining (0x1)
-  0x1200: variables.c:121 (/fixture)
+  0x1200: variables.c:129 (/fixture)
   variables:
     outer (parameter)
       type:
@@ -218,7 +218,7 @@ expression: "FunctionsDebug::new(&session, &functions)"
       0x1200..0x1201: register rdi
 
 > 0x11f0: aggregates (0x1)
-  0x11f0: variables.c:106 (/fixture)
+  0x11f0: variables.c:114 (/fixture)
 
 > 0x11e0: pointers (0x1)
   0x11e0: variables.c:79 (/fixture)
