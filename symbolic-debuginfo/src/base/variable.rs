@@ -90,8 +90,10 @@ pub struct PrimitiveType<'data> {
     ///
     /// The encoding gives additional information how the value of the type is to be interpreted.
     pub encoding: Option<PrimitiveTypeEncoding>,
-    /// The size of the primitive type.
+    /// The size of the primitive type's storage.
     pub size: TypeSize,
+    /// The meaningful value range within the primitive type's storage.
+    pub value_size: Option<ValueSize>,
 }
 
 /// An encoding for a [`PrimitiveType`].
@@ -175,11 +177,22 @@ pub enum MemberOffset {
     Bits(u64),
 }
 
-/// The size of a type in memory.
-#[derive(Debug, Copy, Clone)]
+/// The size of a type's storage in memory.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TypeSize {
     /// The size is given in bytes.
     Bytes(u64),
+    /// The size is given in bits.
+    Bits(u64),
+}
+
+/// The meaningful value range within a base type's storage.
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub struct ValueSize {
+    /// The actual size of the value in bits.
+    pub size: u64,
+    /// The bit offset of the value from the beginning of the storage.
+    pub offset: u64,
 }
 
 /// A single variable available in a function scope.

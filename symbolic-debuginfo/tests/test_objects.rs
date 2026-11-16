@@ -205,11 +205,10 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
 
         match ty {
             Type::Primitive(ty) => {
-                let TypeSize::Bytes(size) = ty.size;
-                let unit = if size == 1 { "byte" } else { "bytes" };
+                let (size, unit) = size(ty.size);
                 let name = ty.name.as_deref().unwrap_or("<unknown>");
 
-                match ty.encoding {
+                let result = match ty.encoding {
                     Some(encoding) => writeln!(
                         f,
                         "{:indent$}> Primitive: {name} ({encoding:?}, {size} {unit})",
@@ -222,11 +221,21 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
                         "",
                         indent = self.depth * 2
                     ),
+                };
+                if let Some(value_size) = ty.value_size {
+                    writeln!(
+                        f,
+                        "{:indent$}  (value: size {}, offset {})",
+                        "",
+                        value_size.size,
+                        value_size.offset,
+                        indent = self.depth * 2
+                    )?;
                 }
+                result
             }
             Type::Pointer(ty) => {
-                let TypeSize::Bytes(size) = ty.size;
-                let unit = if size == 1 { "byte" } else { "bytes" };
+                let (size, unit) = size(ty.size);
 
                 writeln!(
                     f,
@@ -274,8 +283,8 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
                     indent = self.depth * 2
                 )?;
                 match ty.size {
-                    Some(TypeSize::Bytes(size)) => {
-                        let unit = if size == 1 { "byte" } else { "bytes" };
+                    Some(ty_size) => {
+                        let (size, unit) = size(ty_size);
                         writeln!(f, " ({size} {unit})")?;
                     }
                     None => writeln!(f, " (<unknown size>)")?,
@@ -315,6 +324,13 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
                 Ok(())
             }
         }
+    }
+}
+
+fn size(size: TypeSize) -> (u64, &'static str) {
+    match size {
+        TypeSize::Bytes(size) => (size, if size == 1 { "byte" } else { "bytes" }),
+        TypeSize::Bits(size) => (size, if size == 1 { "bit" } else { "bits" }),
     }
 }
 

@@ -3,7 +3,7 @@ use gimli::{AttributeValue, DebuggingInformationEntry, UnitOffset, constants};
 use crate::dwarf::{DwarfError, Slice, UnitRef};
 use crate::{
     MemberOffset, PointerType, PrimitiveType, PrimitiveTypeEncoding, StructureMember,
-    StructureType, Type, TypeDefType, TypeSize,
+    StructureType, Type, TypeDefType, TypeSize, ValueSize,
 };
 
 pub fn parse_type<'d>(
@@ -34,7 +34,9 @@ fn parse_base_type<'d>(
 ) -> Option<PrimitiveType<'d>> {
     let mut name = None;
     let mut encoding = None;
-    let mut size = None;
+    let mut byte_size = None;
+    let mut bit_size = None;
+    let mut data_bit_offset = None;
 
     for attr in entry.attrs {
         match attr.name() {
@@ -42,8 +44,9 @@ fn parse_base_type<'d>(
                 // May also need to check `DW_AT_specification` and `DW_AT_abstract_origin` for the name.
                 name = unit.string_value(attr.value());
             }
-            // Need to handle `bit` sizes here eventually.
-            constants::DW_AT_byte_size => size = attr.udata_value(),
+            constants::DW_AT_byte_size => byte_size = attr.udata_value(),
+            constants::DW_AT_bit_size => bit_size = attr.udata_value(),
+            constants::DW_AT_data_bit_offset => data_bit_offset = attr.udata_value(),
             constants::DW_AT_encoding => {
                 use AttributeValue::Encoding;
                 encoding = Some(match attr.value() {
@@ -66,10 +69,24 @@ fn parse_base_type<'d>(
         }
     }
 
+    let (size, value_size) = match (byte_size, bit_size) {
+        (Some(byte_size), Some(bit_size)) => (
+            TypeSize::Bytes(byte_size),
+            Some(ValueSize {
+                size: bit_size,
+                offset: data_bit_offset.unwrap_or(0),
+            }),
+        ),
+        (Some(byte_size), None) => (TypeSize::Bytes(byte_size), None),
+        (None, Some(bit_size)) => (TypeSize::Bits(bit_size), None),
+        (None, None) => return None,
+    };
+
     Some(PrimitiveType {
         name,
         encoding,
-        size: TypeSize::Bytes(size?),
+        size,
+        value_size,
     })
 }
 
@@ -85,14 +102,19 @@ fn parse_pointer_type<'d>(
             // Return `None` if `DW_AT_type` is present but cannot be resolved, rather than
             // treating the pointer as `void*`.
             constants::DW_AT_type => pointee = Some(unit.to_type_ref(attr)?),
-            constants::DW_AT_byte_size => size = attr.udata_value(),
+            constants::DW_AT_byte_size => {
+                size = attr.udata_value().map(TypeSize::Bytes);
+            }
+            constants::DW_AT_bit_size => {
+                size = attr.udata_value().map(TypeSize::Bits);
+            }
             _ => {}
         }
     }
 
     Some(PointerType {
         pointee: pointee.map(Into::into),
-        size: TypeSize::Bytes(size.unwrap_or_else(|| unit.unit.encoding().address_size.into())),
+        size: size.unwrap_or_else(|| TypeSize::Bytes(unit.unit.encoding().address_size.into())),
     })
 }
 
@@ -134,7 +156,12 @@ fn parse_structure_type<'d>(
             constants::DW_AT_name => {
                 name = unit.string_value(attr.value());
             }
-            constants::DW_AT_byte_size => size = attr.udata_value(),
+            constants::DW_AT_byte_size => {
+                size = attr.udata_value().map(TypeSize::Bytes);
+            }
+            constants::DW_AT_bit_size => {
+                size = attr.udata_value().map(TypeSize::Bits);
+            }
             _ => {}
         }
     }
@@ -189,7 +216,78 @@ fn parse_structure_type<'d>(
 
     Ok(Some(StructureType {
         name: name,
-        size: size.map(TypeSize::Bytes),
+        size,
         members,
     }))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::base::SymbolMap;
+    use crate::dwarf::{DwarfInfo, DwarfUnitTable, Endian};
+    use crate::{ObjectKind, Type};
+    use gimli::read::{DebugAbbrev, DebugInfo, Dwarf};
+    use symbolic_common::CpuFamily;
+
+    #[test]
+    fn test_type_sizes() {
+        let debug_abbrev = [
+            1, 0x11, 0, 0, 0, 2, 0x24, 0, 0x0b, 0x0f, 0, 0, 3, 0x24, 0, 0x0d, 0x0f, 0, 0, 4, 0x24,
+            0, 0x0b, 0x0f, 0x0d, 0x0f, 0x6b, 0x0f, 0, 0, 5, 0x24, 0, 0x0b, 0x0f, 0x0d, 0x0f, 0, 0,
+            6, 0x13, 0, 0x0b, 0x0f, 0, 0, 7, 0x13, 0, 0x0d, 0x0f, 0, 0, 8, 0x0f, 0, 0, 0, 9, 0x0f,
+            0, 0x0b, 0x0f, 0, 0, 0,
+        ];
+        let types = [2, 4, 3, 39, 4, 4, 1, 7, 5, 4, 1, 6, 8, 7, 32, 8, 9, 4, 0];
+        let mut debug_info = (types.len() as u32 + 9).to_le_bytes().to_vec();
+        debug_info.extend_from_slice(&[5, 0, 1, 8, 0, 0, 0, 0]);
+        debug_info.extend_from_slice(&[1]);
+        debug_info.extend_from_slice(&types);
+
+        let debug_abbrev = DebugAbbrev::new(&debug_abbrev, Endian::Little);
+        let debug_info = DebugInfo::new(&debug_info, Endian::Little);
+        let mut dwarf =
+            Dwarf::load(|_| Ok::<_, gimli::Error>(Slice::new(&[], Endian::Little))).unwrap();
+        dwarf.debug_abbrev = debug_abbrev;
+        dwarf.debug_info = debug_info;
+        let dwarf = DwarfInfo {
+            info: DwarfUnitTable::from_iter(dwarf.units()).unwrap(),
+            types: DwarfUnitTable::from_iter(dwarf.type_units()).unwrap(),
+            inner: dwarf,
+            symbol_map: SymbolMap::new(),
+            address_offset: 0,
+            kind: ObjectKind::Debug,
+            cpu_family: CpuFamily::Amd64,
+        };
+        let unit = dwarf.info.get_unit(0, &dwarf.inner).unwrap().unwrap();
+        let unit = UnitRef { info: &dwarf, unit };
+        let mut entries = unit.unit.entries();
+        entries.next_dfs().unwrap();
+        let mut offsets = Vec::new();
+        while let Some(entry) = entries.next_dfs().unwrap() {
+            offsets.push(entry.offset());
+        }
+
+        let actual =
+            offsets
+                .into_iter()
+                .map(|offset| match parse_type(unit, offset).unwrap().unwrap() {
+                    Type::Primitive(ty) => (ty.size, ty.value_size),
+                    Type::StructureType(ty) => (ty.size.unwrap(), None),
+                    Type::Pointer(ty) => (ty.size, None),
+                    Type::TypeDef(_) => unreachable!(),
+                });
+        let expected = [
+            (TypeSize::Bytes(4), None),
+            (TypeSize::Bits(39), None),
+            (TypeSize::Bytes(4), Some(ValueSize { size: 1, offset: 7 })),
+            (TypeSize::Bytes(4), Some(ValueSize { size: 1, offset: 0 })),
+            (TypeSize::Bytes(8), None),
+            (TypeSize::Bits(32), None),
+            (TypeSize::Bytes(8), None),
+            (TypeSize::Bytes(4), None),
+        ];
+        let actual = actual.collect::<Vec<_>>();
+        assert_eq!(actual, expected);
+    }
 }
