@@ -166,6 +166,8 @@ pub struct StructureMember<'data> {
     pub ty: TypeRef,
     /// The offset of this member from the beginning of the structure.
     pub offset: MemberOffset,
+    /// The size of this member's storage, if it differs from its type's storage size.
+    pub size: Option<TypeSize>,
 }
 
 /// The offset of a member from the beginning of a structure.

@@ -309,6 +309,15 @@ impl fmt::Debug for TypeDebug<'_, '_, '_> {
                             writeln!(f, " (offset {offset} {unit})")?;
                         }
                     }
+                    if let Some(member_size) = member.size {
+                        let (size, unit) = size(member_size);
+                        writeln!(
+                            f,
+                            "{:indent$}  (size {size} {unit})",
+                            "",
+                            indent = (self.depth + 1) * 2
+                        )?;
+                    }
                     write!(
                         f,
                         "{:?}",
